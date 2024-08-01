@@ -1,4 +1,4 @@
-    ```markdown
+
     # Sample Static Website
 
     This is a sample static website created for testing the deployment on an Ubuntu web server. It includes:
@@ -26,4 +26,3 @@
        ```
 
     3. Open `index.html` in a web browser to view the website.
-    ```
