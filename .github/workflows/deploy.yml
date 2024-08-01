@@ -1,9 +1,9 @@
-   name: Deploy Static Website
+    name: Deploy Static Website
 
     on:
       push:
         branches:
-          - [main]
+          - main
 
     jobs:
       deploy:
