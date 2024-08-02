@@ -13,6 +13,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Install zrok
+        run: |
+          wget https://github.com/openziti/zrok/releases/download/v0.4.38/zrok_0.4.38_linux_amd64.tar.gz
+          tar -xvzf zrok_0.4.38_linux_amd64.tar.gz
+          sudo mv zrok /usr/local/bin/
+
       - name: Deploy via SSH using zrok
         env:
           ZROK_TOKEN: ${{ secrets.ZROK_TOKEN }}
