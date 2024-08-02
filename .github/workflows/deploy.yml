@@ -1,26 +1,27 @@
-name: Deploy static website
+      name: Deploy static website
 
-on:
-  push:
-    branches:
-      - main
+      on:
+        push:
+          branches:
+            - main
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+      jobs:
+        build:
+          runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+          steps:
+          - name: Checkout repository
+            uses: actions/checkout@v2
 
-    - name: Deploy to Server
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: ${{ secrets.SSH_PORT }}
-        script: |
-          cd /var/www/html/website
-          sudo git pull origin main
-          sudo systemctl restart apache2
+          - name: Deploy files to Ubuntu server
+            uses: appleboy/scp-action@v0.1.2
+            with:
+              source: "dist/*"
+              target: "cilin@51d9-143-44-165-168.ngrok-free.app:/var/www/html"
+              key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+          - name: Restart Apache
+            run: |
+              ssh -o StrictHostKeyChecking=no user@abc12345.ngrok.io 'sudo systemctl restart apache2'
+            env:
+              SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
