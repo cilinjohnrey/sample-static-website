@@ -1,4 +1,4 @@
-name: Deploy static website
+name: CI/CD Pipeline
 
 on:
   push:
@@ -6,25 +6,28 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: List files in the repository
-      run: ls -R
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      
+      - name: Install dependencies
+        run: npm install
 
-    - name: Deploy files to Ubuntu server
-      uses: appleboy/scp-action@v0.1.2
-      with:
-        source: "*"
-        target: "cilin@51d9-143-44-165-168.ngrok-free.app:/var/www/html"
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Build
+        run: npm run build
 
-    - name: Restart Apache
-      run: |
-        ssh -o StrictHostKeyChecking=no user@51d9-143-44-165-168.ngrok-free.app 'sudo systemctl restart apache2'
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Deploy via SSH using zrok
+        env:
+          ZROK_TOKEN: ${{ secrets.ZROK_TOKEN }}
+        run: |
+          chmod 600 ~/.ssh/id_rsa
+          echo "$ZROK_TOKEN" > ~/zrok.token
+          ssh -o StrictHostKeyChecking=no cilin@192.168.0.172 -p 1991 "cd /var/www/html && git pull origin main && sudo systemctl restart nginx"
