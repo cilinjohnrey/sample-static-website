@@ -1,36 +1,28 @@
-   name: Deploy to Ubuntu Server
+name: Deploy to Ubuntu Live Server
 
-   on:
-     push:
-       branches:
-         - main
+on:
+  push:
+    branches:
+      - main
 
-   jobs:
-     build:
-       runs-on: ubuntu-latest
-       
-       steps:
-       - name: Checkout repository
-         uses: actions/checkout@v2
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-       - name: Set up SSH
-         uses: webfactory/ssh-agent@v0.5.3
-         with:
-           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-       - name: Install required packages
-         run: sudo apt-get update && sudo apt-get install -y rsync sshpass
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan 192.168.0.172 >> ~/.ssh/known_hosts
 
-       - name: Deploy files to server
-         env:
-           SSH_PASS: ${{ secrets.SSH_PASS }}
-         run: |
-           sshpass -p "$SSH_PASS" rsync -avz --delete --exclude '.git*' ./ cilin@192.168.0.172:/var/www/html/
-
-       - name: Install zrok on server
-         run: |
-           sshpass -p "$SSH_PASS" ssh cilin@192.168.0.172 "wget https://github.com/openziti/zrok/releases/download/v0.4.38/zrok_0.4.38_linux_amd64.tar.gz && tar -xzf zrok_0.4.38_linux_amd64.tar.gz && sudo mv zrok /usr/local/bin/"
-
-       - name: Enable zrok on server
-         run: |
-           sshpass -p "$SSH_PASS" ssh cilin@192.168.0.172 "zrok enable GrmEEx5Nk68d && zrok share private --backend-mode=web /var/www/html"
+    - name: Run Commands on Remote Server
+      run: |
+        ssh -o StrictHostKeyChecking=no cilin@192.168.0.172 << 'EOF'
+          # Your remote command here
+          echo "Hello, this is from GitHub Actions!"
+        EOF
