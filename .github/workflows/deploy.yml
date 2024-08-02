@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI/CD Deployment
 
 on:
   push:
@@ -27,9 +27,10 @@ jobs:
         env:
           ZROK_TOKEN: ${{ secrets.ZROK_TOKEN }}
         run: |
-          echo "${{ secrets.ZROK_TOKEN }}" > ~/zrok.token
-          nohup zrok access private $(cat ~/zrok.token) &
+          zrok access private "${{ secrets.ZROK_TOKEN }}"
 
-      - name: Deploy via SSH
+      - name: Deploy to Server
+        env:
+          ZROK_TOKEN: ${{ secrets.ZROK_TOKEN }}
         run: |
-          ssh -o StrictHostKeyChecking=no -p 1991 cilin@127.0.0.1 "cd /var/www/html && git pull origin main && sudo systemctl restart nginx"
+          sshpass -p 'sio@1231999' scp -o StrictHostKeyChecking=no -P 1991 -r * cilin@127.0.0.1:/var/www/html/
