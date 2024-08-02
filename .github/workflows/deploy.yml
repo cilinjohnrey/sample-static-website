@@ -17,6 +17,6 @@ jobs:
         env:
           ZROK_TOKEN: ${{ secrets.ZROK_TOKEN }}
         run: |
-          echo "$ZROK_TOKEN" > ~/zrok.token
+          echo "$ZROK_TOKEN"
           zrok access private $ZROK_TOKEN
           ssh -o StrictHostKeyChecking=no -p 1991 cilin@127.0.0.1 "cd /var/www/html && git pull origin main && sudo systemctl restart nginx"
