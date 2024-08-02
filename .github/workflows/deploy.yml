@@ -27,7 +27,8 @@ jobs:
         env:
           ZROK_TOKEN: ${{ secrets.ZROK_TOKEN }}
         run: |
-          zrok access private "${{ secrets.ZROK_TOKEN }}"
+          echo "${{ secrets.ZROK_TOKEN }}" > ~/zrok.token
+          nohup zrok access private $(cat ~/zrok.token) &
 
       - name: Deploy via SSH
         run: |
