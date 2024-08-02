@@ -19,12 +19,15 @@ jobs:
           tar -xvzf zrok_0.4.38_linux_amd64.tar.gz
           sudo mv zrok /usr/local/bin/
 
+      - name: Enable zrok
+        run: |
+          zrok enable ${{ secrets.ZROK_ENABLE_TOKEN }}
+
       - name: Access share using zrok
         env:
           ZROK_TOKEN: ${{ secrets.ZROK_TOKEN }}
         run: |
-          echo "${{ secrets.ZROK_TOKEN }}" > ~/zrok.token
-          zrok access private $(cat ~/zrok.token)
+          zrok access private "${{ secrets.ZROK_TOKEN }}"
 
       - name: Deploy via SSH
         run: |
