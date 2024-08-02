@@ -1,36 +1,36 @@
-name: CI/CD Deployment
+   name: Deploy to Ubuntu Server
 
-on:
-  push:
-    branches:
-      - main
+   on:
+     push:
+       branches:
+         - main
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+   jobs:
+     build:
+       runs-on: ubuntu-latest
+       
+       steps:
+       - name: Checkout repository
+         uses: actions/checkout@v2
 
-      - name: Install zrok
-        run: |
-          wget https://github.com/openziti/zrok/releases/download/v0.4.38/zrok_0.4.38_linux_amd64.tar.gz
-          tar -xvzf zrok_0.4.38_linux_amd64.tar.gz
-          sudo mv zrok /usr/local/bin/
+       - name: Set up SSH
+         uses: webfactory/ssh-agent@v0.5.3
+         with:
+           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Enable zrok
-        run: |
-          zrok enable ${{ secrets.ZROK_ENABLE_TOKEN }}
+       - name: Install required packages
+         run: sudo apt-get update && sudo apt-get install -y rsync sshpass
 
-      - name: Access share using zrok
-        env:
-          ZROK_TOKEN: ${{ secrets.ZROK_TOKEN }}
-        run: |
-          zrok access private "${{ secrets.ZROK_TOKEN }}"
+       - name: Deploy files to server
+         env:
+           SSH_PASS: ${{ secrets.SSH_PASS }}
+         run: |
+           sshpass -p "$SSH_PASS" rsync -avz --delete --exclude '.git*' ./ cilin@192.168.0.172:/var/www/html/
 
-      - name: Deploy to Server
-        env:
-          ZROK_TOKEN: ${{ secrets.ZROK_TOKEN }}
-        run: |
-          sshpass -p 'sio@1231999' scp -o StrictHostKeyChecking=no -P 1991 -r * cilin@127.0.0.1:/var/www/html/
+       - name: Install zrok on server
+         run: |
+           sshpass -p "$SSH_PASS" ssh cilin@192.168.0.172 "wget https://github.com/openziti/zrok/releases/download/v0.4.38/zrok_0.4.38_linux_amd64.tar.gz && tar -xzf zrok_0.4.38_linux_amd64.tar.gz && sudo mv zrok /usr/local/bin/"
+
+       - name: Enable zrok on server
+         run: |
+           sshpass -p "$SSH_PASS" ssh cilin@192.168.0.172 "zrok enable GrmEEx5Nk68d && zrok share private --backend-mode=web /var/www/html"
