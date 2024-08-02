@@ -1,27 +1,26 @@
-    name: Deploy static website
+name: Deploy static website
 
-    on:
-      push:
-        branches:
-          - main
+on:
+  push:
+    branches:
+      - main
 
-    jobs:
-      build:
-        runs-on: ubuntu-latest
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-        steps:
-        - name: Checkout code
-          uses: actions/checkout@v2
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-        - name: Deploy to Server
-          uses: appleboy/ssh-action@master
-          env:
-            PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          with:
-            host: 192.168.0.172
-            username: cilin
-            key: ${{ secrets.SSH_PRIVATE_KEY }}
-            script: |
-              cd /var/www/html/website
-              sudo git pull origin main
-              sudo systemctl restart apache2
+    - name: Deploy to Server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        script: |
+          cd /var/www/html/website
+          sudo git pull origin main
+          sudo systemctl restart apache2
