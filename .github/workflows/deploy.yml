@@ -1,29 +1,27 @@
-name: Deploy Static Website
+    name: Deploy static website
 
-on:
-  push:
-    branches:
-      - main
+    on:
+      push:
+        branches:
+          - main
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+    jobs:
+      build:
+        runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
 
-    - name: Install prerequisites
-      run: sudo apt-get update && sudo apt-get install -y rsync
-
-    - name: Deploy to server
-      env:
-        SERVER_USER: ${{ secrets.SERVER_USER }}
-        SERVER_IP: ${{ secrets.SERVER_IP }}
-        SERVER_PATH: ${{ secrets.SERVER_PATH }}
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      run: |
-        echo "$SSH_PRIVATE_KEY" > private_key
-        chmod 600 private_key
-        rsync -avz -e "ssh -i private_key -o StrictHostKeyChecking=no" . $SERVER_USER@$SERVER_IP:$SERVER_PATH
-        rm private_key
+        - name: Deploy to Server
+          uses: appleboy/ssh-action@master
+          env:
+            PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          with:
+            host: 192.168.0.172
+            username: cilin
+            key: ${{ secrets.SSH_PRIVATE_KEY }}
+            script: |
+              cd /var/www/html/website
+              sudo git pull origin main
+              sudo systemctl restart apache2
