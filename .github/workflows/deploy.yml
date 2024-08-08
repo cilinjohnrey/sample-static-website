@@ -1,4 +1,4 @@
-name: Deploy to Ubuntu Live Server
+name: CI/CD Pipeline
 
 on:
   push:
@@ -10,19 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout Repository
       uses: actions/checkout@v2
 
     - name: Setup SSH
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_KEY }}
       run: |
+        echo "$SSH_PRIVATE_KEY" > /tmp/deploy_key
+        chmod 600 /tmp/deploy_key
         mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan 192.168.0.172 >> ~/.ssh/known_hosts
+        echo -e "Host foo.serveo.net\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
 
-    - name: Run Commands on Remote Server
+    - name: Deploy to Server
       run: |
-        ssh -o StrictHostKeyChecking=no cilin@192.168.0.172 << 'EOF'
-          # Your remote command here
-          echo "Hello, this is from GitHub Actions!"
-        EOF
+        rsync -avz --delete -e "ssh -i /tmp/deploy_key" ./ user@foo.serveo.net:/var/www/html
+
+    - name: Cleanup
+      run: rm -f /tmp/deploy_key
