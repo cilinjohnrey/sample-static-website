@@ -1,49 +1,46 @@
 name: CI/CD Pipeline
 
 on: 
-  push:
-    branches:
+  push: 
+    branches: 
       - main
 
-jobs:
-  deploy:
+jobs: 
+  deploy: 
     runs-on: ubuntu-latest
 
-    steps:
+    steps: 
       - name: Checkout Repository
         uses: actions/checkout@v2
-      
+
       - name: Install SSH Client and SSHPass
         run: sudo apt-get update && sudo apt-get install -y sshpass
-      
+
       - name: Setup SSH
-        run: |
+        run: | 
           mkdir -p ~/.ssh
           echo -e "Host serveo.net\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
           echo -e "Host foo.serveo.net\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
       - name: Test SSH Connection
-        env:
+        env: 
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-        run: |
+        run: | 
           sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "echo 'SSH connection successful'"
 
       - name: Deploy to Server
-        env:
+        env: 
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
         if: success()
-        run: |
+        run: | 
           sshpass -p "$SSH_PASSWORD" rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -J serveo.net" . cilin@foo:/var/www/html
-      
+
       - name: Start HTTP Server
-        env:
+        env: 
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
         if: success()
-        run: |
-          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "nohup ssh -R 80:localhost:3000 serveo.net -o ServerAliveInterval=60 2>&1 | tee /tmp/serveo.log &"
-          sleep 5
-          URL=$(sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "cat /tmp/serveo.log | grep 'Forwarding' | awk '{print $4}'")
-          echo "Your website is accessible at: $URL"
+        run: | 
+          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "nohup ssh -R 80:localhost:3000 serveo.net > /dev/null 2>&1 &"
 
       - name: Cleanup
         run: rm -f /tmp/deploy_key
