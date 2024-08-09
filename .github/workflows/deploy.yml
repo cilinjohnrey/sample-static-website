@@ -40,11 +40,20 @@ jobs:
         SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       if: success()
       run: |
-        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "nohup python3 -m http.server 3000 -d /var/www/html &"
+        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "
+          fuser -k 3000/tcp || true && \
+          nohup python3 -m http.server 3000 -d /var/www/html &"
+
     - name: Set Up Serveo Forwarding
+      env:
+        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       if: success()
       run: |
         nohup ssh -R 80:localhost:3000 serveo.net > /dev/null 2>&1 &
+      
+    - name: Print Serveo URL
+      if: success()
+      run: echo "Website can be accessed at http://foo.serveo.net"
 
     - name: Cleanup
       run: rm -f /tmp/deploy_key
