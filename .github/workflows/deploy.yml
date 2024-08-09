@@ -20,12 +20,15 @@ jobs:
         echo "$SSH_PRIVATE_KEY" > /tmp/deploy_key
         chmod 600 /tmp/deploy_key
         mkdir -p ~/.ssh
-        ssh-keyscan -H foo.serveo.net >> ~/.ssh/known_hosts
+        echo -e "Host foo.serveo.net\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+
+    - name: Test SSH Connection
+      run: |
+        ssh -i /tmp/deploy_key cilin@foo.serveo.net "echo 'SSH connection successful'"
 
     - name: Deploy to Server
       run: |
-        rsync -avz -q --delete -e "ssh -i /tmp/deploy_key" ./ cilin@foo.serveo.net:/var/www/html
+        rsync -avzz --debug=all --delete -e "ssh -i /tmp/deploy_key" ./ cilin@foo.serveo.net:/var/www/html
 
     - name: Cleanup
-      run: |
-        rm -f /tmp/deploy_key
+      run: rm -f /tmp/deploy_key
