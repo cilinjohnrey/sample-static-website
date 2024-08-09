@@ -40,7 +40,7 @@ jobs:
         SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       if: success()
       run: |
-        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net "nohup python3 -m http.server 3000 -d /var/www/html &"
+        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "nohup python3 -m http.server 3000 -d /var/www/html &"
     - name: Set Up Serveo Forwarding
       if: success()
       run: |
