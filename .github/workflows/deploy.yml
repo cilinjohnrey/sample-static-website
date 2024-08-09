@@ -33,16 +33,15 @@ jobs:
         SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       if: success()
       run: |
-        sshpass -p "$SSH_PASSWORD" rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -J serveo.net" . cilin@foo:/tmp/deploy && \
-        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "sudo rsync -avz /tmp/deploy/ /var/www/html && rm -rf /tmp/deploy"
+        sshpass -p "$SSH_PASSWORD" rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -J serveo.net" . cilin@foo:/var/www/html
 
     - name: Start HTTP Server and Generate Serveo URL
       env:
         SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       if: success()
       run: |
-        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "nohup sudo python3 -m http.server 80 -d /var/www/html &"
-        echo "Website can be accessed at http://foo.serveo.net"
+        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "nohup python3 -m http.server 80 -d /var/www/html &"
+        echo "Website can be accessed at http://$GITHUB_RUN_ID.foo.serveo.net"
 
     - name: Cleanup
       run: rm -f /tmp/deploy_key
