@@ -19,10 +19,11 @@ jobs:
     - name: Setup SSH
       run: |
         mkdir -p ~/.ssh
-        echo -e "Host foo.serveo.net\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+        echo -e "Host serveo.net\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+        echo -e "Host foo.serveo.net\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
     - name: Test SSH Connection
       env:
-        SSH_PASSWORD: sio@1231999
+        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       run: |
-        sshpass -p "$SSH_PASSWORD" ssh -J serveo.net cilin@foo.serveo.net "echo 'SSH connection successful'"
+        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo.serveo.net "echo 'SSH connection successful'"
