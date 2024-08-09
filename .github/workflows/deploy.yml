@@ -37,6 +37,6 @@ jobs:
         SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       if: success()
       run: |
-        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "nohup ssh -R 80:localhost:3000 serveo.net"
+        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "nohup ssh -R 80:localhost:3000 serveo.net > serveo.out 2>&1 &"
     - name: Cleanup
       run: rm -f /tmp/deploy_key
