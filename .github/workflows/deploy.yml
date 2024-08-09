@@ -20,15 +20,22 @@ jobs:
         echo "$SSH_PRIVATE_KEY" > /tmp/deploy_key
         chmod 600 /tmp/deploy_key
         mkdir -p ~/.ssh
-        echo -e "Host foo.serveo.net\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+        echo -e "Host serveo.net\n\tIdentityFile /tmp/deploy_key\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+        echo -e "Host foo\n\tHostname foo.serveo.net\n\tUser cilin\n\tProxyJump serveo.net\n" >> ~/.ssh/config
 
     - name: Test SSH Connection
       run: |
-        ssh -i /tmp/deploy_key cilin@foo.serveo.net "echo 'SSH connection successful'"
+        ssh -J serveo.net cilin@foo "echo 'SSH connection successful'"
 
     - name: Deploy to Server
+      if: success()
       run: |
-        rsync -avzz --debug=all --delete -e "ssh -i /tmp/deploy_key" ./ cilin@foo.serveo.net:/var/www/html
+        rsync -avz --delete -e "ssh -J serveo.net -i /tmp/deploy_key" ./ cilin@foo:/var/www/html
+
+    - name: Generate and Print URL
+      if: success()
+      run: |
+        ssh -J serveo.net cilin@foo "echo 'Your static website is available at: http://foo.serveo.net'"
 
     - name: Cleanup
       run: rm -f /tmp/deploy_key
