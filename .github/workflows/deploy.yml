@@ -1,8 +1,9 @@
 name: CI/CD Pipeline
 
-on: push:
-  branches:
-    - main
+on: 
+  push:
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -11,10 +12,10 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-
+      
       - name: Install SSH Client and SSHPass
         run: sudo apt-get update && sudo apt-get install -y sshpass
-
+      
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
@@ -33,18 +34,16 @@ jobs:
         if: success()
         run: |
           sshpass -p "$SSH_PASSWORD" rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -J serveo.net" . cilin@foo:/var/www/html
-
+      
       - name: Start HTTP Server
         env:
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
         if: success()
         run: |
-          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "nohup ssh -R 80:localhost:3000 serveo.net > /tmp/serveo.out 2>&1 &"
-      
-      - name: Fetch Serveo URL
-        run: |
-          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "sleep 5; cat /tmp/serveo.out | grep -o 'https://[a-z0-9]*.serveo.net'" > serveo_url.txt
-          cat serveo_url.txt
+          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "nohup ssh -R 80:localhost:3000 serveo.net -o ServerAliveInterval=60 2>&1 | tee /tmp/serveo.log &"
+          sleep 5
+          URL=$(sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "cat /tmp/serveo.log | grep 'Forwarding' | awk '{print $4}'")
+          echo "Your website is accessible at: $URL"
 
       - name: Cleanup
         run: rm -f /tmp/deploy_key
