@@ -13,29 +13,33 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v2
 
+    - name: Install SSH Client
+      run: sudo apt-get install -y sshpass
+
     - name: Setup SSH
       env:
-        SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_KEY }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       run: |
         echo "$SSH_PRIVATE_KEY" > /tmp/deploy_key
         chmod 600 /tmp/deploy_key
         mkdir -p ~/.ssh
-        echo -e "Host serveo.net\n\tIdentityFile /tmp/deploy_key\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
-        echo -e "Host foo\n\tHostname foo.serveo.net\n\tUser cilin\n\tProxyJump serveo.net\n" >> ~/.ssh/config
+        echo -e "Host foo.serveo.net\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
 
     - name: Test SSH Connection
       run: |
-        ssh -J serveo.net cilin@foo "echo 'SSH connection successful'"
+        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo.serveo.net "echo 'SSH connection successful'"
 
     - name: Deploy to Server
-      if: success()
+      if: success() # Ensure deployment only happens if SSH connection is successful
       run: |
-        rsync -avz --delete -e "ssh -J serveo.net -i /tmp/deploy_key" ./ cilin@foo:/var/www/html
+        rsync -avz --delete -e "sshpass -p '$SSH_PASSWORD' ssh -o StrictHostKeyChecking=no -J serveo.net" ./ cilin@foo.serveo.net:/var/www/html
 
-    - name: Generate and Print URL
-      if: success()
+    - name: Generate Serveo URL
+      if: success() # Ensure URL generation only happens if file deployment is successful
       run: |
-        ssh -J serveo.net cilin@foo "echo 'Your static website is available at: http://foo.serveo.net'"
+        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo.serveo.net "nohup python3 -m http.server 80 -d /var/www/html &"
+        echo "http://$GITHUB_RUN_ID.foo.serveo.net"
 
     - name: Cleanup
       run: rm -f /tmp/deploy_key
