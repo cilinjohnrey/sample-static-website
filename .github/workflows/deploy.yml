@@ -35,19 +35,5 @@ jobs:
         run: | 
           sshpass -p "$SSH_PASSWORD" rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -J serveo.net" . cilin@foo:/var/www/html
 
-      - name: Start HTTP Server
-        env: 
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-        if: success()
-        run: | 
-          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "nohup ssh -R 80:localhost:3000 serveo.net > serveo.log 2>&1 &"
-
-      - name: Get Serveo URL
-        env: 
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-        if: success()
-        run: | 
-          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -J serveo.net cilin@foo "tail -n 1 serveo.log"
-
       - name: Cleanup
         run: rm -f /tmp/deploy_key
